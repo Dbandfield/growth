@@ -1,0 +1,14 @@
+#overlay
+{
+    margin: 10px;
+    position: absolute;
+    font-family: monospace;
+    color: #333366;
+
+}
+
+body
+{
+    border: none;
+    margin: 0px;
+}
