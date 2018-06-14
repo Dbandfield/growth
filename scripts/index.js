@@ -6,10 +6,14 @@ var ImprovedNoise = require('./ImprovedNoise.js')
 var PointerLockControls = require('./gr_PointerLockControls.js')
 // mine
 var Planet = require('./gr_planet.js');
+var Target = require('./gr_target.js');
+var Utils = require('./gr_utils.js');
 
 // npm requires
 var THREE = require('three');
 
+// We have two scene, one main, and one for the HUD
+// MAIN vars
 var camera;
 var listener;
 var scene;
@@ -17,69 +21,23 @@ var renderer;
 var controls;
 var raycaster;
 
+// planets
 var numPlanets = 10;
 var planets = [];
 var focusPlanetNdx = 0;
 
 var travelFlag = false;
+var canWalk = false;
+var angleToDisableWalking = 45;
+
+// HUD VARS
+var cameraHUD;
+var sceneHUD;
+var targetHUD;
 
 var overlay = document.getElementById('overlay');
 var instr = document.getElementById('instructions');
 var display3D = document.getElementById('display3D');
-
-var havePointerLock = 'pointerLockElement' in document ||
-    'mozPointerLockElement' in document ||
-    'webkitPointerLockElement' in document;
-if (havePointerLock) {
-    var element = document.body;
-    var pointerlockchange = function(event)
-    {
-        if (document.pointerLockElement === element ||
-            document.mozPointerLockElement === element ||
-            document.webkitPointerLockElement === element) {
-            controlsEnabled = true;
-            controls.enabled = true;
-            overlay.style.display = 'none';
-        } else {
-            controls.enabled = false;
-            velocity.set(0, 0, 0);
-            moveLeft = false;
-            moveRight = false;
-            moveForward = false;
-            moveBackward = false;
-            overlay.style.display = 'block';
-            instr.style.display = '';
-        }
-        console.log("Pointer lock change!");
-        controlsEnabled = true;
-        controls.enabled = true;
-        overlay.style.display = 'none';
-    };
-
-    var pointerlockerror = function(event) {
-        instr.style.display = '';
-        console.log("Pointer lock error!");
-    };
-    // Hook pointer lock state change events
-    document.addEventListener('pointerlockchange', pointerlockchange, false);
-    document.addEventListener('mozpointerlockchange', pointerlockchange, false);
-    document.addEventListener('webkitpointerlockchange', pointerlockchange, false);
-    document.addEventListener('pointerlockerror', pointerlockerror, false);
-    document.addEventListener('mozpointerlockerror', pointerlockerror, false);
-    document.addEventListener('webkitpointerlockerror', pointerlockerror, false);
-    instr.addEventListener('click', function(event) {
-        instr.style.display = 'none';
-
-        element.requestPointerLock = element.requestPointerLock ||
-            element.mozRequestPointerLock ||
-            element.webkitRequestPointerLock;
-
-        element.requestPointerLock();
-    }, false);
-
-} else {
-    instr.innerHTML = 'Your browser doesn\'t seem to support Pointer Lock API';
-}
 
 var controlsEnabled = true;
 var moveForward = false;
@@ -99,6 +57,8 @@ animate();
 
 function init()
 {
+    initPointerLock();
+    initHUD(); 
     camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 1, 100000);
     scene = new THREE.Scene();
 
@@ -157,19 +117,19 @@ function init()
         switch (event.keyCode) {
             case 38: // up
             case 87: // w
-                moveForward = true;
+                if(canWalk) moveForward = true;
                 break;
             case 37: // left
             case 65: // a
-                moveLeft = true;
+                if(canWalk) moveLeft = true;
                 break;
             case 40: // down
             case 83: // s
-                moveBackward = true;
+                if(canWalk) moveBackward = true;
                 break;
             case 39: // right
             case 68: // d
-                moveRight = true;
+                if(canWalk) moveRight = true;
                 break;
             case 32: // space
 
@@ -197,11 +157,6 @@ function init()
                 moveRight = false;
                 break;
             case 69:// e
-                element.requestPointerLock = element.requestPointerLock ||
-                    element.mozRequestPointerLock ||
-                    element.webkitRequestPointerLock;
-
-                element.requestPointerLock();
                 break;
             case 70:// f
                 travelFlag = true;
@@ -217,6 +172,7 @@ function init()
     renderer.setPixelRatio(window.devicePixelRatio);
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.setClearColor(new THREE.Color(0,0,0), 1000.0);
+    renderer.autoClear = false;
     display3D.appendChild(renderer.domElement);
 
     window.addEventListener('resize', onWindowResize, false);
@@ -231,6 +187,9 @@ function init()
 
             element.requestPointerLock();
         }, 10000);
+
+
+    initView(controls.getObject(), planets[focusPlanetNdx].object);
 
 }
 
@@ -247,11 +206,39 @@ function animate() {
     if (controlsEnabled === true)
     {
 
-        if(travelFlag)
+        var newFocus = getLookingAt(controls.getObject());
+        if(newFocus && 
+           newFocus.object.id != planets[focusPlanetNdx].object.id)
         {
-            getLookingAt(camera);
-            travelFlag = false;
+            if(!targetHUD.getOn())
+            {
+                targetHUD.turnOn();
+            }
+
+            if(travelFlag)
+            {
+                
+                for(var i in planets)
+                {
+                    if(planets[i].object.id == newFocus.object.id)
+                    {
+                        focusPlanetNdx = i;
+                        break;
+                    }
+                }
+            
+                travelFlag = false;
+            }
         }
+        else
+        {
+            if(targetHUD.getOn())
+            {
+                targetHUD.turnOff();
+            }
+        }
+
+
 
         var toPlanet = new THREE.Vector3();
         var from = new THREE.Vector3();
@@ -311,10 +298,10 @@ function animate() {
         }
 
         controls.getObject().position.addScaledVector(toPlanet, gravVel);
-
     }
 
     renderer.render(scene, camera);
+    updateHUD(renderer);
 }
 
 function onWindowResize() {
@@ -329,19 +316,32 @@ it is looking at
 */
 function getLookingAt(_obj)
 {
-    // normalized negative local z axis in world space
-    var ax = getWorldAxis('z', _obj).normalize().negate(); 
-    var ray = new THREE.Raycaster(new THREE.Vector3().copy(_obj.position), 
-                                ax);
-    
-    for(var i in planets)
+    // First see which planets are near centre of screenspace
+    var thresh = 0.2;
+    var near = [];
+    for(var p in planets)
     {
-        var is = ray.intersectObject(planets[i].object);
-        console.log(is);
-        if(is.length > 0)
+        var screenPos = planets[p].object.position.clone().project(camera);
+        screenPos.setZ(0);
+
+        var isClose = screenPos.length() < thresh;
+        if(isClose)
         {
-            console.log('new focus');
-            focusPlanetNdx = i;
+            near.push(planets[p]);
+        }
+    }
+
+    for(p in near)
+    {
+        var toPlanet = new THREE.Vector3();
+        toPlanet.subVectors(near[p].object.position, _obj.position);
+        toPlanet.normalize();
+
+        var ray = new THREE.Raycaster(_obj.position.clone(), toPlanet);
+        var intersections = ray.intersectObject(near[p].object);
+        if(intersections.length > 0)
+        {
+            return near[p];
         }
     }
 }
@@ -411,6 +411,9 @@ function orientate(_obj, _other, _delta)
     dir = getWorldAxis('y', _obj);
     dir.normalize();
     var ang = dir.angleTo(y);
+
+    canWalk = Utils.toDeg(ang) < angleToDisableWalking;
+
     var axis = new THREE.Vector3();
     axis.crossVectors(dir, y);    
     if(ang > 0.01 || ang < -0.01)
@@ -419,4 +422,85 @@ function orientate(_obj, _other, _delta)
         _obj.rotateOnWorldAxis(axis.normalize(), toRotate);
     }
 };
+
+function initView(_obj, _focus)
+{
+    _obj.lookAt(_focus.position);
+}
+
+function initPointerLock()
+{
+    var havePointerLock = 'pointerLockElement' in document ||
+    'mozPointerLockElement' in document ||
+    'webkitPointerLockElement' in document;
+if (havePointerLock) 
+{
+    var element = document.body;
+    var pointerlockchange = function(event)
+    {
+        if (document.pointerLockElement === element ||
+            document.mozPointerLockElement === element ||
+            document.webkitPointerLockElement === element) {
+            controlsEnabled = true;
+            controls.enabled = true;
+            overlay.style.display = 'none';
+        } else {
+            controls.enabled = false;
+            velocity.set(0, 0, 0);
+            moveLeft = false;
+            moveRight = false;
+            moveForward = false;
+            moveBackward = false;
+            overlay.style.display = 'block';
+            instr.style.display = '';
+        }
+        console.log("Pointer lock change!");
+        controlsEnabled = true;
+        controls.enabled = true;
+        overlay.style.display = 'none';
+    };
+
+    var pointerlockerror = function(event) {
+        instr.style.display = '';
+        console.log("Pointer lock error!");
+    };
+    // Hook pointer lock state change events
+    document.addEventListener('pointerlockchange', pointerlockchange, false);
+    document.addEventListener('mozpointerlockchange', pointerlockchange, false);
+    document.addEventListener('webkitpointerlockchange', pointerlockchange, false);
+    document.addEventListener('pointerlockerror', pointerlockerror, false);
+    document.addEventListener('mozpointerlockerror', pointerlockerror, false);
+    document.addEventListener('webkitpointerlockerror', pointerlockerror, false);
+    instr.addEventListener('click', function(event) {
+        instr.style.display = 'none';
+
+        element.requestPointerLock = element.requestPointerLock ||
+            element.mozRequestPointerLock ||
+            element.webkitRequestPointerLock;
+
+        element.requestPointerLock();
+    }, false);
+
+} else {
+    instr.innerHTML = 'Your browser doesn\'t seem to support Pointer Lock API';
+}
+}
+
+function initHUD()
+{
+    cameraHUD = new THREE.OrthographicCamera(-window.innerWidth/2,
+                                                window.innerWidth/2,
+                                                -window.innerHeight/2,
+                                                window.innerHeight/2);
+    sceneHUD = new THREE.Scene();
+
+    targetHUD = new Target({scene: sceneHUD});    
+}
+
+function updateHUD(_renderer)
+{
+    _renderer.render(sceneHUD, cameraHUD);
+}
+
+
 
