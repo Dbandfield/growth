@@ -1,5 +1,6 @@
 /**
  * @author mrdoob / http://mrdoob.com/
+ * Modified by daniel
  */
 
 var THREE = require('three');
@@ -26,7 +27,11 @@ PointerLockControls = function ( camera ) {
 		var movementX = event.movementX || event.mozMovementX || event.webkitMovementX || 0;
 		var movementY = event.movementY || event.mozMovementY || event.webkitMovementY || 0;
 
-		yawObject.rotation.y -= movementX * 0.002;
+		// This was the original line but it caused problems with
+		// my spherical gravity code.: - daniel
+		// yawObject.rotation.y -= movementX * 0.002;
+		// this works better: - daniel
+		yawObject.rotateY(-movementX * 0.002);
 		pitchObject.rotation.x -= movementY * 0.002;
 
 		pitchObject.rotation.x = Math.max( - PI_2, Math.min( PI_2, pitchObject.rotation.x ) );
@@ -43,10 +48,9 @@ PointerLockControls = function ( camera ) {
 
 	this.enabled = false;
 
-	this.getObject = function () {
-
+	this.getObject = function () 
+	{
 		return yawObject;
-
 	};
 
 	this.getDirection = function () {

@@ -14,6 +14,9 @@ for running local dev environment, you need something that can act as a server. 
 `bundle.js` contains all the js scripts bundled together. This is made by running `browserify index.js > bundle.js` and what is in the repo is the latest build. If you want to run build again for whatever reason, you can run:\
 `dev.sh build`
 
+By default browserify logs errors with references to the bundled file. Obviously this is annoying if you want to debug, so if you add the `--debug` flag to browserify it will reference the pre-bundled files. USe the following to run in debug mode:\
+`dev.sh dbuild`
+
 # RUNNING LOCALLY
 
 you need to have a server running locally to run the code. To run a python server from the http module you can just execute:\
@@ -22,4 +25,9 @@ Which will be avilable at the default `localhost:8000`.\
 
 To both build and run the server use:\
 `dev.sh run`
+
+To get useful debug messages (as explained in BUILDING) use:\
+`dev.sh drun`
+
+
 
