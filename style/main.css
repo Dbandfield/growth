@@ -1,13 +1,52 @@
 #overlay
 {
-    margin: 10px;
+
     position: absolute;
+
     width: 100%;
-    height : 100%;
-    font-family: monospace;
-    color: #333366;
+    height: 100%;
+
+    background-color: rgba(0,0,0,0.7);
+
+    display: table;
 
 }
+
+#instructions
+{
+    width: 50%;
+    height: 50%;
+
+    display: -webkit-box;
+    display: -moz-box;
+    display: box;
+
+    -webkit-box-orient: horizontal;
+    -moz-box-orient: horizontal;
+    box-orient: horizontal;
+
+    -webkit-box-pack: center;
+    -moz-box-pack: center;
+    box-pack: center;
+
+    -webkit-box-align: center;
+    -moz-box-align: center;
+    box-align: center;
+
+    color: #bb6565;
+    text-align: center;
+
+    font-family: 'Courier New', Courier, monospace;
+
+    cursor: pointer;
+
+    margin: auto;
+    vertical-align: middle;
+
+    display: table-cell;
+}
+
+
 
 body
 {
