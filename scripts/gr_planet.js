@@ -3,7 +3,6 @@
 // local requires
 var checkArguments = require("./gr_arguments.js");
 var ImprovedNoise = require("./ImprovedNoise.js");
-var TileableNoise = require("./gr_tileableNoise.js");
 var THREE = require('three');
 
 var Planet = class Planet
@@ -20,20 +19,9 @@ var Planet = class Planet
         checkArguments(_args, this.m_arguments);
 
         this.m_scene = _args.scene;
-        this.m_geometry = new THREE.SphereGeometry(_args.size, 64, 64);
+        this.m_geometry = new THREE.SphereGeometry(_args.size, 128, 128);
         var heightData = this.generateHeightFromVertices(this.m_geometry.vertices);
 
-        // this.m_noise = new TileableNoise();
-
-        // var heightData = [];
-        // for(var i = 0; i < (64 * 64); i ++)
-        // {
-        //     var x = i % 64;
-        //     var y = ~~(i / 64);
-        //     x /= 64;
-        //     y /= 64;
-        //     heightData.push(this.m_noise.noise(x, y, 64));
-        // }
 
         // get highest
         var highest = 0;
