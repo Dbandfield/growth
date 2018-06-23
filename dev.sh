@@ -7,13 +7,13 @@ set -Eeuxo pipefail
 function build
 {
     dir=$(dirname "$0") # this directory
-    browserify $dir/scripts/index.js > $dir/scripts/bundle.js
+    browserify $dir/app/scripts/index.js > $dir/app/scripts/bundle.js
 }
 
 function dbuild
 {
      dir=$(dirname "$0") # this directory
-    browserify --debug $dir/scripts/index.js > $dir/scripts/bundle.js   
+    browserify --debug $dir/app/scripts/index.js > $dir/app/scripts/bundle.js   
 }
 
 function server

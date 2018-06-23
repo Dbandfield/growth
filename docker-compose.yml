@@ -1,0 +1,13 @@
+version: "3"
+services:
+  web:
+    image: dbandfield/growth
+    ports:
+      - "80:80"
+  redis:
+    image: redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - "/home/docker/data:/data"
+    command: redis-server --appendonly yes

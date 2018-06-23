@@ -1,0 +1,16 @@
+extends layout
+
+block content
+  div(id="overlay") 
+    div(id="instructions").
+      Click to begin
+      |
+      W, A, S, D : move
+      |
+      Mouse : look
+      |
+      F : Travel to another planet
+
+  div(id="display3D")
+  script(src="/scripts/bundle.js")
+
