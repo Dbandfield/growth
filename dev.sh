@@ -4,40 +4,36 @@
 
 set -Eeuxo pipefail
 
+# docker account name
+DOCKER_USER=dbandfield
+# name of this app
+DOCKER_APP=growth
+# any tags to qualify app with
+# defaults to 'latest'
+DOCKER_TAGS=latest
+
 function build
 {
     dir=$(dirname "$0") # this directory
-    browserify $dir/app/scripts/index.js > $dir/app/scripts/bundle.js
+    docker build -t $DOCKER_USER/$DOCKER_APP:$DOCKER_TAGS $dir
 }
 
-function dbuild
-{
-     dir=$(dirname "$0") # this directory
-    browserify --debug $dir/app/scripts/index.js > $dir/app/scripts/bundle.js   
-}
-
-function server
+function rebuild
 {
     dir=$(dirname "$0") # this directory
-    cd $dir
-    python -m http.server
+    docker build --no-cache -t $DOCKER_USER/$DOCKER_APP:$DOCKER_TAGS $dir
 }
 
-function run
+function start
+{
+    docker-compose up
+}
+
+function all
 {
     build
-    server
+    start
 }
 
-function drun
-{
-    dbuild
-    server
-}
-
-function gitClean
-{
-    git branch --merged master | grep -v '^[ *]*master$' | xargs -r git branch -d
-}
 
 "$@"

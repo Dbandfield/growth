@@ -5,6 +5,7 @@
   "private": true,
   "main": "index.js",
   "dependencies": {
+    "browserify": "^16.2.2",
     "cookie-parser": "~1.4.3",
     "debug": "~2.6.9",
     "express": "~4.16.0",
@@ -15,6 +16,8 @@
   },
   "devDependencies": {},
   "scripts": {
+    "build-debug": "browserify --debug ./public/scripts/index.js > ./public/scripts/bundle.js",
+    "build": "browserify ./public/scripts/index.js > ./public/scripts/bundle.js",
     "start": "node ./bin/www",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
