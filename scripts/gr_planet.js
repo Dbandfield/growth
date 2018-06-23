@@ -35,10 +35,16 @@ var Planet = class Planet
         var vCol = []
         for(var i = 0; i < this.m_geometry.vertices.length; i ++)
         {
+            // 1 + relative height of vertex
             var r = 1.0 + (heightData[i] / (highest * 4));
+            // move vertex away from centre of sphere
             this.m_geometry.vertices[i].multiplyScalar(r);
+
+            // set colour of vertex to be related to height of vertex
+            // but with also slight random element
             var col = new THREE.Color();
-            col.setHSL(0, 0.3, r - 0.5);
+            var hue = (heightData[i] / highest)/6;
+            col.setHSL(hue, 0.5, 0.6);
             vCol.push(col);
         }
 
@@ -56,7 +62,6 @@ var Planet = class Planet
 
         this.m_geometry.verticesNeedUpdate = true;
         this.m_material = new THREE.MeshLambertMaterial({color: 0xffffff, vertexColors: THREE.VertexColors});
-        // this.m_material.vertexColors = THREE.FaceColors;
         this.m_mesh = new THREE.Mesh(this.m_geometry, this.m_material);
         this.m_mesh.position.copy(_args.position);
         this.m_scene.add(this.m_mesh);
