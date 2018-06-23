@@ -1,0 +1,8 @@
+# these will be downloaded 
+node_modules
+# just logs
+npm-debug.log
+# editor detritus
+.vscode
+# this will be generated 
+bundle.js
