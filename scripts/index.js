@@ -47,11 +47,13 @@ var moveLeft = false;
 var moveRight = false;
 // var canJump = false; // put back in later
 
+
 var prevTime = performance.now();
 
 var velocity = new THREE.Vector3();
 var direction = new THREE.Vector3();
 var gravVel = 0;
+var maxGravVel = 50;
 
 init();
 animate();
@@ -275,13 +277,19 @@ function animate() {
         // apply gravity.
         if(onObject)
         {
-            if(intersections[0].distance < 10)
+            
+            if(intersections[0].distance < 20 &&
+                intersections[0].distance > 5)
             {
                 gravVel = 0;
             }
+            else if(intersections[0].distance <= 10)
+            {
+                gravVel -= delta * 1;
+            }
             else
             {
-                gravVel = Math.min(gravVel + delta * 1, 5);
+                gravVel = Math.min(gravVel + delta * 1, maxGravVel);
             }
 
             if(distToPlanet < 100) 
@@ -289,6 +297,11 @@ function animate() {
                 canWalk = Physics.orientate(controls.getObject(), 
                             planets[focusPlanetNdx].object.position, 
                             delta, 45);
+                maxGravVel = 5;
+            }
+            else
+            {
+                maxGravVel = 50;
             }
         }
         else // inside object, negative gravity
