@@ -1,0 +1,112 @@
+{
+    "accessors" : [
+        {
+            "bufferView" : 0,
+            "componentType" : 5123,
+            "count" : 6516,
+            "max" : [
+                4287
+            ],
+            "min" : [
+                0
+            ],
+            "type" : "SCALAR"
+        },
+        {
+            "bufferView" : 1,
+            "componentType" : 5126,
+            "count" : 4288,
+            "max" : [
+                3.1258044242858887,
+                2.214172124862671,
+                3.125805377960205
+            ],
+            "min" : [
+                -3.125805377960205,
+                -0.043094247579574585,
+                -3.1258039474487305
+            ],
+            "type" : "VEC3"
+        },
+        {
+            "bufferView" : 2,
+            "componentType" : 5126,
+            "count" : 4288,
+            "max" : [
+                0.999976396560669,
+                1.0,
+                0.999976396560669
+            ],
+            "min" : [
+                -0.999976396560669,
+                -0.9999999403953552,
+                -0.999976396560669
+            ],
+            "type" : "VEC3"
+        }
+    ],
+    "asset" : {
+        "generator" : "Khronos Blender glTF 2.0 exporter",
+        "version" : "2.0"
+    },
+    "bufferViews" : [
+        {
+            "buffer" : 0,
+            "byteLength" : 13032,
+            "byteOffset" : 0,
+            "target" : 34963
+        },
+        {
+            "buffer" : 0,
+            "byteLength" : 51456,
+            "byteOffset" : 13032,
+            "target" : 34962
+        },
+        {
+            "buffer" : 0,
+            "byteLength" : 51456,
+            "byteOffset" : 64488,
+            "target" : 34962
+        }
+    ],
+    "buffers" : [
+        {
+            "byteLength" : 115944,
+            "uri" : "mushroom1.bin"
+        }
+    ],
+    "meshes" : [
+        {
+            "name" : "Cylinder",
+            "primitives" : [
+                {
+                    "attributes" : {
+                        "NORMAL" : 2,
+                        "POSITION" : 1
+                    },
+                    "indices" : 0
+                }
+            ]
+        }
+    ],
+    "nodes" : [
+        {
+            "mesh" : 0,
+            "name" : "Cylinder",
+            "scale" : [
+                1.0,
+                3.154592990875244,
+                1.0
+            ]
+        }
+    ],
+    "scene" : 0,
+    "scenes" : [
+        {
+            "name" : "Scene",
+            "nodes" : [
+                0
+            ]
+        }
+    ]
+}
