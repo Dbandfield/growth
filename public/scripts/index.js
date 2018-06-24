@@ -6,12 +6,15 @@ var ImprovedNoise = require('./ImprovedNoise.js')
 var PointerLockControls = require('./gr_PointerLockControls.js')
 // mine
 var Planet = require('./gr_planet.js');
+var Plant = require('./gr_plant.js');
 var Target = require('./gr_target.js');
 var Utils = require('./gr_utils.js');
 var Physics = require('./gr_physics.js');
+var Loaders = require('./gr_loaders.js');
 
 // npm requires
 var THREE = require('three');
+var Path = require('path');
 
 // We have two scene, one main, and one for the HUD
 // MAIN vars
@@ -27,9 +30,8 @@ var numPlanets = 10;
 var planets = [];
 var focusPlanetNdx = 0;
 
-var travelFlag = false;
-var canWalk = false;
-var angleToDisableWalking = 45;
+// plants
+var plants = [];
 
 // HUD VARS
 var cameraHUD;
@@ -40,13 +42,15 @@ var overlay = document.getElementById('overlay');
 var instr = document.getElementById('instructions');
 var display3D = document.getElementById('display3D');
 
+var travelFlag = false;
+var canWalk = false;
+var angleToDisableWalking = 45;
 var controlsEnabled = true;
 var moveForward = false;
 var moveBackward = false;
 var moveLeft = false;
 var moveRight = false;
 // var canJump = false; // put back in later
-
 
 var prevTime = performance.now();
 
@@ -65,10 +69,12 @@ function init()
     camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 1, 100000);
     scene = new THREE.Scene();
 
+    loadAssets();
+
     var takenPositions = [];
-    var pos = new THREE.Vector3(Math.random() * 10000, 
-                                Math.random() * 10000, 
-                                Math.random() * 10000);
+    var pos = new THREE.Vector3((Math.random() * 10000) - 5000, 
+                                (Math.random() * 10000) - 5000, 
+                                (Math.random() * 10000) - 5000);
 
     for(var i = 0; i < numPlanets; i ++)
     {
@@ -81,9 +87,9 @@ function init()
         var validPos = false;
         while(!validPos)
         {
-            pos = new THREE.Vector3(Math.random() * 10000, 
-                                    Math.random() * 10000, 
-                                    Math.random() * 10000);
+            pos = new THREE.Vector3((Math.random() * 10000) - 5000, 
+                                    (Math.random() * 10000) - 5000, 
+                                    (Math.random() * 10000) - 5000);
             validPos = true;
             for(var p in takenPositions)
             {
@@ -97,15 +103,6 @@ function init()
         takenPositions.push(pos);
     }
 
-    // model
-    var onProgress = function(xhr) {
-        if (xhr.lengthComputable) {
-            var percentComplete = xhr.loaded / xhr.total * 100;
-            console.log(Math.round(percentComplete, 2) + '% downloaded');
-        }
-    };
-
-    var onError = function(xhr) {};
 
     scene.background = new THREE.Color(0x000000);
     scene.fog = new THREE.Fog(0x000000, 10, 10000);
@@ -439,5 +436,35 @@ function updateHUD(_renderer)
     _renderer.render(sceneHUD, cameraHUD);
 }
 
+function loadAssets()
+{
+    var plantFilename = "/data/models/mushroom1.gltf";
+    var onSuccess = function(_gltf)
+    {
+        var pos = new THREE.Vector3(0, 0, 0);
+        console.log("geo");
+        console.log(_gltf);
+        plants.push(new Plant({'scene':scene, 
+                               'position':pos, 
+                               'mesh':_gltf.scene.children[0]}));
+    };
+
+    var onLoading = function(_xhr) 
+    {
+		console.log((_xhr.loaded / _xhr.total * 100) + '% loaded' );
+    };
+
+    var onFailure = function(_err)
+    {
+        console.log("Failed to load plant")
+        throw _err;
+
+    };
+    
+    Loaders.loadGLTF({'filename': plantFilename,
+                        'onSuccess': onSuccess,
+                        'onLoading': onLoading,
+                        'onFailure': onFailure});
+}
 
 
