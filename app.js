@@ -9,28 +9,15 @@ var indexRouter = require('./routes/index');
 var Generate = require('./server-lib/gr_generate.js');
 
 // host name is the name of the container in docker-compose.yml
-var MONGO_HOST = 'mongo';
-var dbName = 'planetarydb';
+var MONGO_HOST = 'growth-db';
+// this will hold universe information
+var dbName = 'universedb';
 // see docker-compose for environment vars
 var MONGO_URL = 'mongodb://' +  
-                process.env.ME_CONFIG_MONGODB_ADMINUSERNAME + ':' + 
-                process.env.ME_CONFIG_MONGODB_ADMINPASSWORD + '@' + 
+                process.env.GROWTH_DB_USER + ':' + 
+                process.env.GROWTH_DB_PASSWORD + '@' + 
                 MONGO_HOST + ':27017/' + dbName;
-console.log("Connecting to mongodb at " + MONGO_URL);
 var mongoClient = Mongo.MongoClient;
-mongoClient.connect(MONGO_URL, function(err, db) 
-{
-  if (err) throw err;
-  console.log(dbName + ' created!');
-
-  var dbo = db.db(dbName);
-  dbo.createCollection("planets", function(err, res) 
-  {
-    if (err) throw err;
-    console.log("Collection created!");
-    db.close();
-  }); // end createCollection
-}); // end connect
 
 var app = express();
 
@@ -64,9 +51,49 @@ app.use(function(err, req, res, next) {
 
 // generate the universe
 var theUniverse = Generate.generateUniverse();
-for(var planet in theUniverse)
+
+// keep trying to connect every 2 secs until it works
+var addUniverseToDb = setInterval(function()
 {
-  //
-}
+  console.log("Waiting for mongo");
+  mongoClient.connect(MONGO_URL, function(_err1, _db) 
+  {
+    var db = _db.db(dbName);
+    if(!_err1)
+    {
+      clearInterval(addUniverseToDb);
+      db.createCollection("planets", function(_err2, _res2)
+      {
+        if(_err2)
+        {
+          console.log(_err2);
+        }
+        else
+        {
+          console.log("Successfully created universe collection");  
+          db.collection("planets").insertMany(theUniverse, function(_err3, _res3)
+          {
+            if(_err3)
+            {
+              console.log(err3);
+            }
+            else
+            {
+              console.log("Successfully added universe to db");
+              _db.close();
+            }
+          });
+        }
+      });
+    }
+    else
+    {
+      console.log(_err1);
+    }
+  }); // end connect
+}, 2000);
+
 
 module.exports = app;
+
+ 
