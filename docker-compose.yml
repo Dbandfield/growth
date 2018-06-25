@@ -1,13 +1,18 @@
 version: "3"
 services:
-  web:
+  growth:
     image: dbandfield/growth
     ports:
       - "80:80"
-  redis:
-    image: redis
-    ports:
-      - "6379:6379"
+    environment:
+      GROWTH_DB_USER: growth
+      GROWTH_DB_PASSWORD: xee8t6u3t
+    depends_on:
+      - growth-db
+  growth-db:
+    image: mongo
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: example
     volumes:
-      - "/home/docker/data:/data"
-    command: redis-server --appendonly yes
+      - "./setup-db.js:/docker-entrypoint-initdb.d/setup-db.js"
