@@ -15,6 +15,15 @@ var Loaders = require('./gr_loaders.js');
 // npm requires
 var THREE = require('three');
 var Path = require('path');
+var sio = require('socket.io-client');
+
+// sequence management
+// have all assets been loaded????
+var loaded = false;
+
+// communication
+var socket = sio();
+
 
 // We have two scene, one main, and one for the HUD
 // MAIN vars
@@ -64,6 +73,13 @@ animate();
 
 function init()
 {
+    // Request universe information
+    console.log("Requesting Universe Information");
+    socket.emit('universe-gen', 'void', function(_msg)
+    {
+        console.log("Received: " + _msg);
+    });
+
     initPointerLock();
     initHUD(); 
     camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 1, 100000);
@@ -428,7 +444,7 @@ function initHUD()
                                                 window.innerHeight/2);
     sceneHUD = new THREE.Scene();
 
-    targetHUD = new Target({scene: sceneHUD});    
+    targetHUD = new Target({scene: sceneHUD});   
 }
 
 function updateHUD(_renderer)
@@ -442,8 +458,6 @@ function loadAssets()
     var onSuccess = function(_gltf)
     {
         var pos = new THREE.Vector3(0, 0, 0);
-        console.log("geo");
-        console.log(_gltf);
         plants.push(new Plant({'scene':scene, 
                                'position':pos, 
                                'mesh':_gltf.scene.children[0]}));
