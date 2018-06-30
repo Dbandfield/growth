@@ -24,7 +24,6 @@ var loaded = false;
 // communication
 var socket = sio();
 
-
 // We have two scene, one main, and one for the HUD
 // MAIN vars
 var camera;
@@ -47,9 +46,16 @@ var cameraHUD;
 var sceneHUD;
 var targetHUD;
 
+// Text Overlays
 var overlay = document.getElementById('overlay');
 var instr = document.getElementById('instructions');
 var display3D = document.getElementById('display3D');
+var messages = 
+[
+    "Click to begin \n W, A, S, D : move \n Mouse : look \n F : Travel to another planet",
+    "Loading ... "
+]
+
 
 var travelFlag = false;
 var canWalk = false;
@@ -73,11 +79,20 @@ animate();
 
 function init()
 {
+    // Set text to loading
+    instr.innerHTML = messages[1];
     // Request universe information
     console.log("Requesting Universe Information");
     socket.emit('universe-gen', 'void', function(_msg)
     {
         console.log("Received: " + _msg);
+    });
+
+    socket.on('universe-gen', function(_data)
+    {
+        console.log("Received universe data!");
+        console.log(_data);
+        parseUniverse(_data);
     });
 
     initPointerLock();
@@ -479,6 +494,13 @@ function loadAssets()
                         'onSuccess': onSuccess,
                         'onLoading': onLoading,
                         'onFailure': onFailure});
+}
+
+function parseUniverse(_data)
+{
+    console.log(_data);
+    // // first check data has everything it is supposed to
+    // if(_data.hasOwnProperty('name'))
 }
 
 
