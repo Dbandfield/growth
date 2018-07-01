@@ -8,7 +8,7 @@ This is a multi-user, interplanetary exploration sim. It is currently work in pr
 A universe is randomly generated with different planets that can be explored. You can travel between them by looking at them and pressing the travel button.
 
 Video:
-<p><a href="https://vimeo.com/277899546">Growth</a></p>
+<p><a href="https://vimeo.com/277899546"> Link to Vimeo </a></p>
 
 ![Screenshot3](screenshots/3.png?raw=true "Screenshot 3")
 
