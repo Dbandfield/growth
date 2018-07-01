@@ -15,6 +15,15 @@ var Loaders = require('./gr_loaders.js');
 // npm requires
 var THREE = require('three');
 var Path = require('path');
+var sio = require('socket.io-client');
+
+// sequence management
+// have all assets been loaded????
+var planetsCreated = false;
+var loaded = false;
+
+// communication
+var socket = sio();
 
 // We have two scene, one main, and one for the HUD
 // MAIN vars
@@ -38,9 +47,16 @@ var cameraHUD;
 var sceneHUD;
 var targetHUD;
 
+// Text Overlays
 var overlay = document.getElementById('overlay');
 var instr = document.getElementById('instructions');
 var display3D = document.getElementById('display3D');
+var messages = 
+[
+    "Click to begin \n W, A, S, D : move \n Mouse : look \n F : Travel to another planet",
+    "Loading ... "
+]
+
 
 var travelFlag = false;
 var canWalk = false;
@@ -64,45 +80,30 @@ animate();
 
 function init()
 {
+    // Set text to loading
+    instr.innerHTML = messages[1];
+    
+    scene = new THREE.Scene();
+
+    // Request universe information
+    console.log("Requesting Universe Information");
+    socket.emit('universe-gen', 'void', function(_msg)
+    {
+        console.log("Received: " + _msg);
+    });
+
+    socket.on('universe-gen', function(_data)
+    {
+        console.log("Received universe data!");
+        console.log(_data);
+        parseUniverse(_data, scene);
+    });
+
     initPointerLock();
     initHUD(); 
     camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 1, 100000);
-    scene = new THREE.Scene();
 
     loadAssets();
-
-    var takenPositions = [];
-    var pos = new THREE.Vector3((Math.random() * 10000) - 5000, 
-                                (Math.random() * 10000) - 5000, 
-                                (Math.random() * 10000) - 5000);
-
-    for(var i = 0; i < numPlanets; i ++)
-    {
-        takenPositions.push(pos);
-        planets.push(new Planet({scene : scene, 
-                                position : pos,
-                                size: (Math.random() * 300) + 300}));
-        scene.add(planets[i].object);
-        // TODO: find way of getting new vlid random positions not involving trial and error
-        var validPos = false;
-        while(!validPos)
-        {
-            pos = new THREE.Vector3((Math.random() * 10000) - 5000, 
-                                    (Math.random() * 10000) - 5000, 
-                                    (Math.random() * 10000) - 5000);
-            validPos = true;
-            for(var p in takenPositions)
-            {
-                if(pos.distanceTo(takenPositions[p]) < 1500)
-                {
-                    validPos = false;
-                }
-            }
-        }
-
-        takenPositions.push(pos);
-    }
-
 
     scene.background = new THREE.Color(0x000000);
     scene.fog = new THREE.Fog(0x000000, 10, 10000);
@@ -193,124 +194,128 @@ function init()
 
 }
 
-function animate() {
-
+function animate() 
+{
     requestAnimationFrame(animate);
 
-    var time = performance.now();
-    var delta = (time - prevTime) / 1000;
-    prevTime = time;
-
-    var params = [];
-
-    if (controlsEnabled === true)
+    if(planetsCreated)
     {
 
-        var newFocus = getLookingAt(controls.getObject());
-        if(newFocus && 
-           newFocus.object.id != planets[focusPlanetNdx].object.id)
+        var time = performance.now();
+        var delta = (time - prevTime) / 1000;
+        prevTime = time;
+
+        var params = [];
+
+        if (controlsEnabled === true)
         {
-            if(!targetHUD.getRed())
+
+            var newFocus = getLookingAt(controls.getObject());
+            if(newFocus && 
+            newFocus.object.id != planets[focusPlanetNdx].object.id)
             {
-                targetHUD.turnRed();
+                if(!targetHUD.getRed())
+                {
+                    targetHUD.turnRed();
+                }
+
+                if(travelFlag)
+                {
+                    
+                    for(var i in planets)
+                    {
+                        if(planets[i].object.id == newFocus.object.id)
+                        {
+                            focusPlanetNdx = i;
+                            break;
+                        }
+                    }
+                
+                    travelFlag = false;
+                }
+            }
+            else
+            {
+                if(targetHUD.getRed())
+                {
+                    targetHUD.turnGreen();
+                }
             }
 
-            if(travelFlag)
+            var toPlanet = new THREE.Vector3();
+            var from = new THREE.Vector3();
+            controls.getObject().getWorldPosition(from);
+            toPlanet.subVectors(planets[focusPlanetNdx].object.position, from);
+
+            toPlanet.normalize();
+            raycaster.set(from, toPlanet)
+            var intersections = raycaster.intersectObject(planets[focusPlanetNdx].object);
+
+            var distToPlanet = 0;
+            var onObject = false;
+            if(intersections.length > 0)
+            {
+                distToPlanet = intersections[0].distance;
+                onObject = true;
+            }
+
+            velocity.x -= velocity.x * 10.0 * delta;
+            velocity.z -= velocity.z * 10.0 * delta;
+            direction.z = Number(moveForward) - Number(moveBackward);
+            direction.x = Number(moveLeft) - Number(moveRight);
+
+            direction.normalize(); // this ensures consistent movements in all directions
+
+            if (moveForward || moveBackward) velocity.z -= direction.z * 400.0 * delta;
+            if (moveLeft    || moveRight)    velocity.x -= direction.x * 400.0 * delta;
+
+            controls.getObject().translateX(velocity.x * delta);
+            controls.getObject().translateY(velocity.y * delta);
+            controls.getObject().translateZ(velocity.z * delta);
+
+            // If the object is 'below' the user (or put another way, 
+            // if the user is not inside the object)
+            // apply gravity.
+            if(onObject)
             {
                 
-                for(var i in planets)
+                if(intersections[0].distance < 20 &&
+                    intersections[0].distance > 5)
                 {
-                    if(planets[i].object.id == newFocus.object.id)
-                    {
-                        focusPlanetNdx = i;
-                        break;
-                    }
+                    gravVel = 0;
                 }
-            
-                travelFlag = false;
+                else if(intersections[0].distance <= 10)
+                {
+                    gravVel -= delta * 1;
+                }
+                else
+                {
+                    gravVel = Math.min(gravVel + delta * 1, maxGravVel);
+                }
+
+                if(distToPlanet < 100) 
+                {
+                    canWalk = Physics.orientate(controls.getObject(), 
+                                planets[focusPlanetNdx].object.position, 
+                                delta, 45);
+                    maxGravVel = 5;
+                }
+                else
+                {
+                    maxGravVel = 50;
+                }
             }
-        }
-        else
-        {
-            if(targetHUD.getRed())
-            {
-                targetHUD.turnGreen();
-            }
-        }
-
-        var toPlanet = new THREE.Vector3();
-        var from = new THREE.Vector3();
-        controls.getObject().getWorldPosition(from);
-        toPlanet.subVectors(planets[focusPlanetNdx].object.position, from);
-
-        toPlanet.normalize();
-        raycaster.set(from, toPlanet)
-        var intersections = raycaster.intersectObject(planets[focusPlanetNdx].object);
-
-        var distToPlanet = 0;
-        var onObject = false;
-        if(intersections.length > 0)
-        {
-            distToPlanet = intersections[0].distance;
-            onObject = true;
-        }
-
-        velocity.x -= velocity.x * 10.0 * delta;
-        velocity.z -= velocity.z * 10.0 * delta;
-        direction.z = Number(moveForward) - Number(moveBackward);
-        direction.x = Number(moveLeft) - Number(moveRight);
-
-        direction.normalize(); // this ensures consistent movements in all directions
-
-        if (moveForward || moveBackward) velocity.z -= direction.z * 400.0 * delta;
-        if (moveLeft    || moveRight)    velocity.x -= direction.x * 400.0 * delta;
-
-        controls.getObject().translateX(velocity.x * delta);
-        controls.getObject().translateY(velocity.y * delta);
-        controls.getObject().translateZ(velocity.z * delta);
-
-        // If the object is 'below' the user (or put another way, 
-        // if the user is not inside the object)
-        // apply gravity.
-        if(onObject)
-        {
-            
-            if(intersections[0].distance < 20 &&
-                intersections[0].distance > 5)
-            {
-                gravVel = 0;
-            }
-            else if(intersections[0].distance <= 10)
+            else // inside object, negative gravity
             {
                 gravVel -= delta * 1;
             }
-            else
-            {
-                gravVel = Math.min(gravVel + delta * 1, maxGravVel);
-            }
 
-            if(distToPlanet < 100) 
-            {
-                canWalk = Physics.orientate(controls.getObject(), 
-                            planets[focusPlanetNdx].object.position, 
-                            delta, 45);
-                maxGravVel = 5;
-            }
-            else
-            {
-                maxGravVel = 50;
-            }
-        }
-        else // inside object, negative gravity
-        {
-            gravVel -= delta * 1;
+            controls.getObject().position.addScaledVector(toPlanet, gravVel);
         }
 
-        controls.getObject().position.addScaledVector(toPlanet, gravVel);
+        renderer.render(scene, camera);
+        updateHUD(renderer);
     }
-
-    renderer.render(scene, camera);
-    updateHUD(renderer);
 }
 
 function onWindowResize() 
@@ -428,7 +433,7 @@ function initHUD()
                                                 window.innerHeight/2);
     sceneHUD = new THREE.Scene();
 
-    targetHUD = new Target({scene: sceneHUD});    
+    targetHUD = new Target({scene: sceneHUD});   
 }
 
 function updateHUD(_renderer)
@@ -442,8 +447,6 @@ function loadAssets()
     var onSuccess = function(_gltf)
     {
         var pos = new THREE.Vector3(0, 0, 0);
-        console.log("geo");
-        console.log(_gltf);
         plants.push(new Plant({'scene':scene, 
                                'position':pos, 
                                'mesh':_gltf.scene.children[0]}));
@@ -465,6 +468,50 @@ function loadAssets()
                         'onSuccess': onSuccess,
                         'onLoading': onLoading,
                         'onFailure': onFailure});
+}
+
+function parseUniverse(_data, _scene)
+{
+    var expectedProps = ['name', 'numPlants', 'position', 'size', 'vertices']
+    for(var p in _data)
+    {
+        for(var thing in expectedProps)
+        {
+            if(!_data[p].hasOwnProperty(expectedProps[thing]))
+            {
+                console.log("Planet data did not have property " + expectedProps[thing]);
+                return null
+            };
+        }
+
+        var geo = new THREE.SphereGeometry(_data[p].size, 128, 128);
+        var verts = _data[p].vertices;
+        for(var i = 0, v = 0; i <  verts.length; i += 3, v ++)
+        {
+            geo.vertices[v] = new THREE.Vector3(verts[i], 
+                                                verts[i + 1], 
+                                                verts[i + 2]);
+        }
+
+        var bufGeo = new THREE.BufferGeometry();
+        bufGeo.fromGeometry(geo);
+
+        var pos = new THREE.Vector3(_data[p].position[0],
+                                    _data[p].position[1],
+                                    _data[p].position[2]);
+
+        var pl = new Planet({scene : scene, 
+            position : pos,
+            size: _data[p].size,
+            geometry: bufGeo,
+            name: _data[p].name,
+            numPlants: _data[p].numPlants});
+        planets.push(pl);
+        _scene.add(pl.object);  
+    }
+
+    planetsCreated = true;
+    instr.innerHTML = messages[0];
 }
 
 

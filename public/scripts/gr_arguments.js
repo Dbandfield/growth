@@ -11,10 +11,11 @@
 
 module.exports = function checkArgs(_obj, _argArr)
 {
+    var ok = true;
     if(!Array.isArray(_argArr))
     {
         console.error('CHECK_ARGS: arguments to check are not array');
-        return false;
+        ok = false;
     }
 
     for(var i in _argArr)
@@ -22,15 +23,15 @@ module.exports = function checkArgs(_obj, _argArr)
         if(typeof(_argArr[i]) != "string")
         {
             console.error('CHECK_ARGS: argument to check is not string');
-            return false;
+            ok = false;
         }
 
         if(!_obj.hasOwnProperty(_argArr[i]))
         {
-            return false;
+            ok = false;
         }
     }
 
-    return true;
+    if(!ok) throw "Check Arguments: Arguments Bad";
 }
 

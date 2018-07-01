@@ -19,3 +19,35 @@ To build from scratch (slower but useful if the cache is causing problems) run `
 
 To start the server locally run `./run.sh start`\
 To build and then start the server run `./run.sh all`
+
+## STRUCTURE
+
+This repo is divided into two main parts, the server side code and the client side code. I am using npm to manage packages, and both the client and server share the `node_modules/` directory.
+
+### SERVER
+
+The server is written in NodeJS in a Docker container. There is also another Docker container which holds a MongoDB database. The significant files and directories are:
+
+- `Dockerfile` : contains build information for the NodeJS container. There is not a corresponding Dockerfile for the database container, as I am using a pre-made image.
+
+- `docker-compose.yml` this contains information for docker-compose to coordinate the two containers
+
+- `app.js` the main server file. This is the entry point for the container.
+
+- `server-lib/` this contains local .js files used by `app.js`.
+
+- `routes/` contains routes for when the client requests a page.
+
+- `setup-db.js` is a script handed over to the MongoDB container to add a user with correct priviliges before we connect.
+
+### CLIENT
+
+The client uses npm to manage packages, by using browserify to generate a bundled javascript file. I am using the three.js library to handle webGL. Unfortuantely the npm three.js package does not contain files from the `examples` directory of the main three.js repo. I have manually included the ones I need with just slight modifications to export the contents with `module.exports`. The significant files and directories include:
+
+- `public/` : this contains all files served to the client, or that become bundled into `bundle.js`
+
+- `index.js` : this is the main client .js file.
+
+- `gr_*.js` : these files are .js included by `index.js`
+
+- `public/data/` : data files, including 3D models and textures

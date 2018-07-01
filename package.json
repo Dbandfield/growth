@@ -13,13 +13,15 @@
     "mongodb": "^3.0.10",
     "morgan": "~1.9.0",
     "pug": "2.0.0-beta11",
+    "socket.io": "^2.1.1",
+    "socket.io-client": "^2.1.1",
     "three": "^0.92.0"
   },
   "devDependencies": {},
   "scripts": {
     "build-debug": "browserify --debug ./public/scripts/index.js > ./public/scripts/bundle.js",
     "build": "browserify ./public/scripts/index.js > ./public/scripts/bundle.js",
-    "start": "node ./bin/www",
+    "start": "node app.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {

@@ -8,7 +8,7 @@ var Three = require("three");
 
 module.exports = 
 {
-    /* generate a new planet and store it in redis
+    /* generate a new planet and store it in 
         for each planet this includes information for:
         - position
         - geometry
@@ -21,7 +21,7 @@ module.exports =
     generatePlanet : function(_args)
     {
         var toCheck = ['position', 'name'];   
-        if(!CheckArguments(_args, toCheck)){console.error("generatePlanet: wrong arguments")};
+        CheckArguments(_args, toCheck);
 
         var sz = (Math.random() * 300) + 300;
         var geo = new Three.SphereGeometry(sz, 128, 128);
@@ -47,12 +47,9 @@ module.exports =
             // move vertex away from centre of sphere
             geo.vertices[i].multiplyScalar(r);
 
-            // convert vertex to 3 element array
-            var v = [];
-            v.push(geo.vertices[i].x);
-            v.push(geo.vertices[i].y);
-            v.push(geo.vertices[i].z);
-            exportVerts.push(v);
+            exportVerts.push(geo.vertices[i].x);
+            exportVerts.push(geo.vertices[i].y);
+            exportVerts.push(geo.vertices[i].z);
         }
 
         var numPlants = 0;
