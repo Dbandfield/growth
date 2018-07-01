@@ -1,6 +1,28 @@
+.text
+{
+    color: rgb(131, 226, 63);
+    font-family: 'Courier New', Courier, monospace;
+    font-style: italic;
+}
+
+#cursor-label
+{
+    position: fixed;
+    font-size: 0.8rem;
+    top: 50%;
+    left: 55%;
+
+}
+
+#always
+{
+    position: absolute;
+    padding : 1rem;
+    font-size: 1.5rem;
+}
+
 #overlay
 {
-
     position: absolute;
 
     width: 100%;
@@ -9,11 +31,12 @@
     background-color: rgba(0,0,0,0.7);
 
     display: table;
-
 }
 
 #instructions
 {
+    font-size: 1.5rem;
+
     width: 50%;
     height: 50%;
 
@@ -33,10 +56,8 @@
     -moz-box-align: center;
     box-align: center;
 
-    color: #bb6565;
     text-align: center;
 
-    font-family: 'Courier New', Courier, monospace;
 
     cursor: pointer;
 

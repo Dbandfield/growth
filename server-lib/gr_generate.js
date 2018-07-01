@@ -76,7 +76,7 @@ module.exports =
                                     (Math.random() * 10000) - 5000, 
                                     (Math.random() * 10000) - 5000);
 
-        var names = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"];
+        var names = ["Matunus", "Vindonnus", "Cocidius", "Ucuetis", "Toutatis", "Taranis", "Epona", "Andarta", "Andraste", "Damona"];
 
         for(var i = 0; i < numPlanets; i ++)
         {

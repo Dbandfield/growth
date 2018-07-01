@@ -1,5 +1,23 @@
 # GROWTH
 
+![Screenshot5](screenshots/5.png?raw=true "Screenshot 5")
+
+## WHAT IS THIS?
+
+This is a multi-user, interplanetary exploration sim. It is currently work in progress.
+A universe is randomly generated with different planets that can be explored. You can travel between them by looking at them and pressing the travel button.
+
+Video:
+<p><a href="https://vimeo.com/277899546">Growth</a></p>
+
+![Screenshot3](screenshots/3.png?raw=true "Screenshot 3")
+
+Not implemented yet:
+
+- Ecosystems of plants
+- Users can affect the planets
+- .. and more ...
+
 ## PREREQUISITES
 
 install docker https://www.docker.com/
