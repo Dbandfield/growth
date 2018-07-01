@@ -260,7 +260,6 @@ function fetchUniverseAndSend(_sock)
       cursor.forEach(
         function(_doc) // iterator callback
         {
-          console.log("I am iterating yay");
           // add doc to array
           planetArray.push(_doc);
         },
