@@ -51,11 +51,23 @@ var targetHUD;
 var overlay = document.getElementById('overlay');
 var instr = document.getElementById('instructions');
 var display3D = document.getElementById('display3D');
-var messages = 
-[
-    "Click to begin \n W, A, S, D : move \n Mouse : look \n F : Travel to another planet",
-    "Loading ... "
-]
+var domAlways = document.getElementById('always');
+var domCursorLabel = document.getElementById('cursor-label');
+
+var alwaysMessages = 
+{
+    void : "",
+    travelling : "Travelling to ",
+    orientate : "Landing",
+    onPlanet : "You are exploring "
+}
+var pausedMessages = 
+{
+    instructions: "Click to begin <br> W, A, S, D : move <br> Mouse : look <br> F : Travel to another planet",
+    loading: "Loading ... "
+}
+
+var paused = true;
 
 
 var travelFlag = false;
@@ -66,6 +78,7 @@ var moveForward = false;
 var moveBackward = false;
 var moveLeft = false;
 var moveRight = false;
+var orientating = false;
 // var canJump = false; // put back in later
 
 var prevTime = performance.now();
@@ -81,7 +94,8 @@ animate();
 function init()
 {
     // Set text to loading
-    instr.innerHTML = messages[1];
+    instr.innerHTML = pausedMessages.loading;
+    domAlways.innerHTML = alwaysMessages.void;
     
     scene = new THREE.Scene();
 
@@ -214,13 +228,15 @@ function animate()
             if(newFocus && 
             newFocus.object.id != planets[focusPlanetNdx].object.id)
             {
-                if(!targetHUD.getRed())
+                domCursorLabel.innerHTML = newFocus.name;
+                if(!targetHUD.getActivated())
                 {
-                    targetHUD.turnRed();
+                    targetHUD.activate();
                 }
 
                 if(travelFlag)
                 {
+                    canWalk = false;
                     
                     for(var i in planets)
                     {
@@ -230,15 +246,18 @@ function animate()
                             break;
                         }
                     }
+
+                    domAlways.innerHTML = alwaysMessages.travelling + planets[focusPlanetNdx].name;
                 
                     travelFlag = false;
                 }
             }
             else
             {
-                if(targetHUD.getRed())
+                if(targetHUD.getActivated())
                 {
-                    targetHUD.turnGreen();
+                    domCursorLabel.innerHTML = "";
+                    targetHUD.deactivate();
                 }
             }
 
@@ -295,9 +314,24 @@ function animate()
 
                 if(distToPlanet < 100) 
                 {
-                    canWalk = Physics.orientate(controls.getObject(), 
+                    if(!orientating)
+                    {
+                        orientating = true;
+                        always.innerHTML = alwaysMessages.orientate;
+                    }
+                    var newCanWalk = Physics.orientate(controls.getObject(), 
                                 planets[focusPlanetNdx].object.position, 
                                 delta, 45);
+                    if(newCanWalk != canWalk)
+                    {
+                        // change message
+                        if(newCanWalk)
+                        {
+                            always.innerHTML = alwaysMessages.onPlanet + planets[focusPlanetNdx].name;
+                        }
+
+                        canWalk = newCanWalk;
+                    }
                     maxGravVel = 5;
                 }
                 else
@@ -322,10 +356,14 @@ function onWindowResize()
 {
     camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
-    renderer.setSize(window.innerWidth, window.innerHeight);
 
-    cameraHUD.aspect = window.innerWidth / window.innerHeight;
+    cameraHUD.left =  -window.innerWidth/2;
+    cameraHUD.right =  window.innerWidth/2;
+    cameraHUD.top = -window.innerHeight/2;
+    cameraHUD.bottom = window.innerHeight/2;
     cameraHUD.updateProjectionMatrix();
+
+    renderer.setSize(window.innerWidth, window.innerHeight);
 
 }
 
@@ -341,26 +379,44 @@ function getLookingAt(_obj)
     for(var p in planets)
     {
         var screenPos = planets[p].object.position.clone().project(camera);
+
         screenPos.setZ(0);
 
         var isClose = screenPos.length() < thresh;
         if(isClose)
         {
             near.push(planets[p]);
-        }
+        } 
     }
 
+    /** Now see which are actually visible with ray casters.
+     * ie. which don't have objects in the way
+     */
     for(p in near)
     {
         var toPlanet = new THREE.Vector3();
         toPlanet.subVectors(near[p].object.position, _obj.position);
         toPlanet.normalize();
 
-        var ray = new THREE.Raycaster(_obj.position.clone(), toPlanet);
-        var intersections = ray.intersectObject(near[p].object);
-        if(intersections.length > 0)
+        var camDir = new THREE.Vector3();
+        camera.getWorldDirection(camDir);
+        camDir.normalize();
+
+        /**
+         *  don't continue if the planet is behind the view.
+         * This is needed because the camera projection above
+         * includes planets that are behind the camera but can still
+         * be projected near the centre of the screen.
+        */
+        
+        if(Utils.toDeg(camDir.angleTo(toPlanet)) < 90) // 90 is slightly arbitrary
         {
-            return near[p];
+            var ray = new THREE.Raycaster(_obj.position.clone(), toPlanet);
+            var intersections = ray.intersectObject(near[p].object);
+            if(intersections.length > 0)
+            {
+                return near[p];
+            }
         }
     }
 }
@@ -511,7 +567,9 @@ function parseUniverse(_data, _scene)
     }
 
     planetsCreated = true;
-    instr.innerHTML = messages[0];
+    instr.innerHTML = pausedMessages.instructions;
+    domAlways.innerHTML = alwaysMessages.travelling + planets[focusPlanetNdx].name;
+
 }
 
 
