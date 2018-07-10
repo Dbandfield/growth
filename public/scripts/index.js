@@ -560,7 +560,7 @@ function parseUniverse(_data, _scene)
             };
         }
 
-        var geo = new THREE.SphereGeometry(_data[p].size, 128, 128);
+        var geo = new THREE.SphereGeometry(_data[p].size, 32, 32);
         var verts = _data[p].vertices;
         for(var i = 0, v = 0; i <  verts.length; i += 3, v ++)
         {
