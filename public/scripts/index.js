@@ -4,13 +4,18 @@
 // from three, but can't get via normal require. Edited to export.
 var ImprovedNoise = require('./ImprovedNoise.js')
 var PointerLockControls = require('./gr_PointerLockControls.js')
+var Loaders = require('./gr_loaders.js');
+
+// three addon
+var Stats = require('./stats.js')
+
 // mine
 var Planet = require('./gr_planet.js');
 var Plant = require('./gr_plant.js');
 var Target = require('./gr_target.js');
 var Utils = require('./gr_utils.js');
 var Physics = require('./gr_physics.js');
-var Loaders = require('./gr_loaders.js');
+
 
 // npm requires
 var THREE = require('three');
@@ -61,6 +66,7 @@ var alwaysMessages =
     orientate : "Landing",
     onPlanet : "You are exploring "
 }
+
 var pausedMessages = 
 {
     instructions: "Click to begin <br> W, A, S, D : move <br> Mouse : look <br> F : Travel to another planet",
@@ -88,6 +94,9 @@ var direction = new THREE.Vector3();
 var gravVel = 0;
 var maxGravVel = 50;
 
+// profiling
+var stats;
+
 init();
 animate();
 
@@ -96,6 +105,10 @@ function init()
     // Set text to loading
     instr.innerHTML = pausedMessages.loading;
     domAlways.innerHTML = alwaysMessages.void;
+
+    stats = new Stats();
+    stats.showPanel(0);
+    document.body.appendChild(stats.dom);
     
     scene = new THREE.Scene();
 
@@ -211,6 +224,8 @@ function init()
 function animate() 
 {
     requestAnimationFrame(animate);
+
+    stats.begin();
 
     if(planetsCreated)
     {
@@ -350,7 +365,9 @@ function animate()
         renderer.render(scene, camera);
         updateHUD(renderer);
     }
-}
+
+    stats.end();
+} // end animate
 
 function onWindowResize() 
 {
@@ -365,7 +382,7 @@ function onWindowResize()
 
     renderer.setSize(window.innerWidth, window.innerHeight);
 
-}
+} 
 
 /* 
 Takes an object as an argument. It returns the object, if any that 
@@ -374,28 +391,31 @@ it is looking at
 function getLookingAt(_obj)
 {
     // First see which planets are near centre of screenspace
-    var thresh = 0.2;
-    var near = [];
+    var closest = 0.2;
+    var near = null;
     for(var p in planets)
     {
-        var screenPos = planets[p].object.position.clone().project(camera);
-
-        screenPos.setZ(0);
-
-        var isClose = screenPos.length() < thresh;
-        if(isClose)
+        if(p != focusPlanetNdx)
         {
-            near.push(planets[p]);
-        } 
+            var screenPos = planets[p].object.position.clone().project(camera);
+
+            screenPos.setZ(0);
+
+            if(screenPos.length() < closest)
+            {
+                closest = screenPos.length();
+                near = planets[p];
+            } 
+        }
     }
 
     /** Now see which are actually visible with ray casters.
      * ie. which don't have objects in the way
      */
-    for(p in near)
+    if(near)
     {
         var toPlanet = new THREE.Vector3();
-        toPlanet.subVectors(near[p].object.position, _obj.position);
+        toPlanet.subVectors(near.object.position, _obj.position);
         toPlanet.normalize();
 
         var camDir = new THREE.Vector3();
@@ -412,10 +432,10 @@ function getLookingAt(_obj)
         if(Utils.toDeg(camDir.angleTo(toPlanet)) < 90) // 90 is slightly arbitrary
         {
             var ray = new THREE.Raycaster(_obj.position.clone(), toPlanet);
-            var intersections = ray.intersectObject(near[p].object);
+            var intersections = ray.intersectObject(near.object);
             if(intersections.length > 0)
             {
-                return near[p];
+                return near;
             }
         }
     }
@@ -540,7 +560,7 @@ function parseUniverse(_data, _scene)
             };
         }
 
-        var geo = new THREE.SphereGeometry(_data[p].size, 128, 128);
+        var geo = new THREE.SphereGeometry(_data[p].size, 32, 32);
         var verts = _data[p].vertices;
         for(var i = 0, v = 0; i <  verts.length; i += 3, v ++)
         {

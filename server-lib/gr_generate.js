@@ -24,7 +24,7 @@ module.exports =
         CheckArguments(_args, toCheck);
 
         var sz = (Math.random() * 300) + 300;
-        var geo = new Three.SphereGeometry(sz, 128, 128);
+        var geo = new Three.SphereGeometry(sz, 32, 32);
         var heightData = generateHeightFromVertices(geo.vertices);
         // get highest
         var highest = 0;
