@@ -1,4 +1,4 @@
-"use-strict"
+"use strict";
 
 // local requires
 var checkArguments = require("./gr_arguments.js");

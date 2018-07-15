@@ -11,11 +11,11 @@ var Stats = require('./stats.js')
 
 // mine
 var Planet = require('./gr_planet.js');
+var Sun = require('./gr_sun.js');
 var Plant = require('./gr_plant.js');
 var Target = require('./gr_target.js');
 var Utils = require('./gr_utils.js');
 var Physics = require('./gr_physics.js');
-
 
 // npm requires
 var THREE = require('three');
@@ -38,6 +38,11 @@ var scene;
 var renderer;
 var controls;
 var raycaster;
+
+//
+
+// the sun
+var sun = null;
 
 // planets
 var numPlanets = 10;
@@ -87,7 +92,9 @@ var moveRight = false;
 var orientating = false;
 // var canJump = false; // put back in later
 
-var prevTime = performance.now();
+// time
+var clock = new THREE.Clock();
+
 
 var velocity = new THREE.Vector3();
 var direction = new THREE.Vector3();
@@ -133,14 +140,17 @@ function init()
     loadAssets();
 
     scene.background = new THREE.Color(0x000000);
-    scene.fog = new THREE.Fog(0x000000, 10, 10000);
-    //var light = new THREE.HemisphereLight(0xbb8888, 0x001100, 1);
-    var light = new THREE.HemisphereLight(0xffffff, 0x112255, 1);
-    light.position.set(0.5, 1, 0.75);
-    scene.add(light);
+    //scene.fog = new THREE.Fog(0x000000, 10, 10000);
+
+    sun = new Sun({position: new THREE.Vector3(0, 0, 0), 
+                    size: 2000, scene: scene, brightness: 2});
+
     controls = new PointerLockControls(camera);
 
     scene.add(controls.getObject());
+    controls.getObject().position.set(3000, 3000, 3000);
+
+
     var onKeyDown = function(event) {
         switch (event.keyCode) {
             case 38: // up
@@ -230,9 +240,9 @@ function animate()
     if(planetsCreated)
     {
 
-        var time = performance.now();
-        var delta = (time - prevTime) / 1000;
-        prevTime = time;
+        var delta = clock.getDelta();
+        
+        sun.update(delta);
 
         var params = [];
 

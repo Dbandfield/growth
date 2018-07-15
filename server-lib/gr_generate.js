@@ -70,11 +70,16 @@ module.exports =
         // an array of planet info which will be returned
         var exportArr = []; 
 
+        var maxDist = 20000;
+        var halfMaxDist = maxDist / 2;
+
+        var sunSize = 5000;
+
         var numPlanets = 10;
         var takenPositions = [];
-        var pos = new Three.Vector3((Math.random() * 10000) - 5000, 
-                                    (Math.random() * 10000) - 5000, 
-                                    (Math.random() * 10000) - 5000);
+        var pos = new Three.Vector3((Math.random() * maxDist) - halfMaxDist, 
+                                    (Math.random() * maxDist) - halfMaxDist, 
+                                    (Math.random() * maxDist) - halfMaxDist);
 
         var names = ["Matunus", "Vindonnus", "Cocidius", "Ucuetis", "Toutatis", "Taranis", "Epona", "Andarta", "Andraste", "Damona"];
 
@@ -88,13 +93,14 @@ module.exports =
             var validPos = false;
             while(!validPos)
             {
-                pos = new Three.Vector3((Math.random() * 10000) - 5000, 
-                                        (Math.random() * 10000) - 5000, 
-                                        (Math.random() * 10000) - 5000);
+                pos = new Three.Vector3((Math.random() * maxDist) - halfMaxDist, 
+                                        (Math.random() * maxDist) - halfMaxDist, 
+                                        (Math.random() * maxDist) - halfMaxDist);
                 validPos = true;
                 for(var p in takenPositions)
                 {
-                    if(pos.distanceTo(takenPositions[p]) < 1500)
+                    if(pos.distanceTo(takenPositions[p]) < 1500 || 
+                        pos.distanceTo(new Three.Vector3(0, 0, 0) < sunSize))
                     {
                         validPos = false;
                     }
