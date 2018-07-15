@@ -42,6 +42,7 @@ class Sun
                                                 vertexShader: document.getElementById('sunVShader').textContent,
                                                 fragmentShader: document.getElementById('sunFShader').textContent});
 
+        
         this.mesh = new THREE.Mesh(this.geometry, this.material);
         this.mesh.add(this.light);
 

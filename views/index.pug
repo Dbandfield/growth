@@ -18,9 +18,15 @@ block content
     uniform sampler2D tex2;
 
     varying vec2 vUv;
+
+    float map(float val, float oldMin, float oldMax, float newMin, float newMax)
+    {
+      return(val - oldMin) * (newMax - newMin) / (oldMax - oldMin) + newMin;
+    }
+
     void main( void ) 
     {   
-      float tm = abs(sin(time / 10.0));
+      float tm = map(abs(sin(time / 10.0)), 0.0, 1.0, 0.2, 1.0);
 
       vec4 col = vec4(0.1, 0.8, 0.0, 1.0);
       vec4 mod = texture2D(tex2, vUv);
