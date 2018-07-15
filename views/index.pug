@@ -1,6 +1,47 @@
 extends layout
 
 block content
+  script(id="sunVShader" type="x-shader/x-vertex").
+    varying vec2 vUv;
+
+    void main()	
+    {
+      vUv = uv;
+      gl_Position = projectionMatrix *
+                    modelViewMatrix *
+                    vec4( position, 1.0 );
+    }   
+  script(id="sunFShader" type="x-shader/x-fragment").
+
+    uniform float time;
+    uniform sampler2D tex1;
+    uniform sampler2D tex2;
+
+    varying vec2 vUv;
+
+    float map(float val, float oldMin, float oldMax, float newMin, float newMax)
+    {
+      return(val - oldMin) * (newMax - newMin) / (oldMax - oldMin) + newMin;
+    }
+
+    void main( void ) 
+    {   
+      float tm = map(abs(sin(time / 10.0)), 0.0, 1.0, 0.2, 1.0);
+
+      vec4 col = vec4(0.1, 0.8, 0.0, 1.0);
+      vec4 mod = texture2D(tex2, vUv);
+            
+      vec2 str = vUv;
+      str.x = str.x + (mod.x * tm);
+      str.y = str.y + (mod.x * tm);
+
+      mod = texture2D(tex2, str);
+
+      mod = mod + (mod * tm);
+      vec4 col2 = col * mod;
+      gl_FragColor = col2;
+    }
+
   div(id="always" class="text")
   div(id="cursor-label" class="text")
   div(id="overlay" class="text") 

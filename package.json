@@ -15,7 +15,8 @@
     "pug": "2.0.0-beta11",
     "socket.io": "^2.1.1",
     "socket.io-client": "^2.1.1",
-    "three": "^0.92.0"
+    "three": "^0.92.0",
+    "three-gpu-particle-system": "^1.0.0"
   },
   "devDependencies": {},
   "scripts": {

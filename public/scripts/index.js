@@ -2,30 +2,32 @@
 
 //local requires
 // from three, but can't get via normal require. Edited to export.
-var ImprovedNoise = require('./ImprovedNoise.js')
 var PointerLockControls = require('./gr_PointerLockControls.js')
 var Loaders = require('./gr_loaders.js');
+var EffectComposer = require('./EffectComposer.js');
+var BloomPass = require('./BloomPass.js');
+var RenderPass = require('./RenderPass.js');
+var CopyShader = require('./CopyShader.js');
+var ShaderPass = require('./ShaderPass.js');
 
 // three addon
 var Stats = require('./stats.js')
 
 // mine
 var Planet = require('./gr_planet.js');
+var Sun = require('./gr_sun.js');
 var Plant = require('./gr_plant.js');
 var Target = require('./gr_target.js');
 var Utils = require('./gr_utils.js');
 var Physics = require('./gr_physics.js');
 
-
 // npm requires
 var THREE = require('three');
-var Path = require('path');
 var sio = require('socket.io-client');
 
 // sequence management
 // have all assets been loaded????
 var planetsCreated = false;
-var loaded = false;
 
 // communication
 var socket = sio();
@@ -39,8 +41,10 @@ var renderer;
 var controls;
 var raycaster;
 
+// the sun
+var sun = null;
+
 // planets
-var numPlanets = 10;
 var planets = [];
 var focusPlanetNdx = 0;
 
@@ -73,12 +77,8 @@ var pausedMessages =
     loading: "Loading ... "
 }
 
-var paused = true;
-
-
 var travelFlag = false;
 var canWalk = false;
-var angleToDisableWalking = 45;
 var controlsEnabled = true;
 var moveForward = false;
 var moveBackward = false;
@@ -87,12 +87,20 @@ var moveRight = false;
 var orientating = false;
 // var canJump = false; // put back in later
 
-var prevTime = performance.now();
+// time
+var clock = new THREE.Clock();
+
 
 var velocity = new THREE.Vector3();
 var direction = new THREE.Vector3();
 var gravVel = 0;
 var maxGravVel = 50;
+
+// post processing
+var renderModel;
+var bloomEffect;
+var copyPass;
+var effectComposer;
 
 // profiling
 var stats;
@@ -133,14 +141,18 @@ function init()
     loadAssets();
 
     scene.background = new THREE.Color(0x000000);
-    scene.fog = new THREE.Fog(0x000000, 10, 10000);
-    //var light = new THREE.HemisphereLight(0xbb8888, 0x001100, 1);
-    var light = new THREE.HemisphereLight(0xffffff, 0x112255, 1);
-    light.position.set(0.5, 1, 0.75);
-    scene.add(light);
+    //scene.fog = new THREE.Fog(0x000000, 10, 10000);
+
+    sun = new Sun({position: new THREE.Vector3(0, 0, 0), 
+                    size: 2000, scene: scene, brightness: 2});
+
     controls = new PointerLockControls(camera);
 
     scene.add(controls.getObject());
+    controls.getObject().position.set(3000, 3000, 3000);
+
+
+
     var onKeyDown = function(event) {
         switch (event.keyCode) {
             case 38: // up
@@ -203,6 +215,17 @@ function init()
     renderer.autoClear = false;
     display3D.appendChild(renderer.domElement);
 
+
+    // post processing
+    renderModel = new RenderPass(scene, camera);
+    bloomEffect = new BloomPass(0.7);
+    copyPass = new ShaderPass(CopyShader);
+    copyPass.renderToScreen = true;
+    effectComposer = new EffectComposer(renderer);
+    effectComposer.addPass(renderModel);
+    effectComposer.addPass(bloomEffect);
+    effectComposer.addPass(copyPass);
+
     window.addEventListener('resize', onWindowResize, false);
 
     setTimeout(function()
@@ -230,9 +253,9 @@ function animate()
     if(planetsCreated)
     {
 
-        var time = performance.now();
-        var delta = (time - prevTime) / 1000;
-        prevTime = time;
+        var delta = clock.getDelta();
+        
+        sun.update(delta);
 
         var params = [];
 
@@ -362,8 +385,11 @@ function animate()
             controls.getObject().position.addScaledVector(toPlanet, gravVel);
         }
 
-        renderer.render(scene, camera);
-        updateHUD(renderer);
+        // renderer.render(scene, camera);
+        renderer.clear();
+        effectComposer.render(0.01);
+
+        // updateHUD(renderer);
     }
 
     stats.end();
@@ -371,6 +397,8 @@ function animate()
 
 function onWindowResize() 
 {
+    effectComposer.reset();
+
     camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
 
