@@ -71,7 +71,7 @@ var Planet = class Planet
     {
         for(var i in this.plants)
         {
-            this.plants[i].setup(plantGeometry);
+            this.plants[i].setup(plantGeometry, this.m_mesh);
         }
     }
 }

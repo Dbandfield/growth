@@ -165,11 +165,7 @@ function randomPointsOnSphere(_radius, _numPoints)
     {
         var degrees = 180 / Math.PI;
         var azimuth = Utils.randomRange(-180, 180);
-        console.log("AZIMUTH");
-        console.log(Utils.toRad(azimuth));
         var zenith = Math.acos(Utils.randomRange(-1.0, 1.0)) * degrees - 90;
-        console.log("ZENITH");
-        console.log(Utils.toRad(zenith));
         var eul = new Three.Euler(0, Utils.toRad(azimuth), Utils.toRad(zenith), 'YZX');
         var vec = new Three.Vector3(_radius, 0, 0);
         vec.applyEuler(eul);
