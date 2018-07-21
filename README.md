@@ -1,6 +1,6 @@
 # GROWTH
 
-![Screenshot5](screenshots/5.png?raw=true "Screenshot 5")
+![Screenshot1](screenshots/1.png?raw=true "Screenshot 1")
 
 ## WHAT IS THIS?
 
@@ -10,7 +10,7 @@ A universe is randomly generated with different planets that can be explored. Yo
 Video:
 <p><a href="https://vimeo.com/277899546"> Link to Vimeo </a></p>
 
-![Screenshot3](screenshots/3.png?raw=true "Screenshot 3")
+![Screenshot2](screenshots/2.png?raw=true "Screenshot 2")
 
 Not implemented yet:
 
