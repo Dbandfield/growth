@@ -4,6 +4,7 @@
 */
 var CheckArguments = require("../public/scripts/gr_arguments.js");
 var ImprovedNoise = require("../public/scripts/ImprovedNoise.js");
+var Utils = require("../public/scripts/gr_utils.js");
 var Three = require("three");
 
 module.exports = 
@@ -52,15 +53,18 @@ module.exports =
             exportVerts.push(geo.vertices[i].z);
         }
 
-        var numPlants = 0;
+        var numPlants = 100;
+        var plantPositions = generatePlantPositions(numPlants, sz);
         var exportObject = 
         {
             vertices: exportVerts,
             name: _args.name,
             position: _args.position,
-            numPlants: numPlants,
+            plantPositions: plantPositions,
             size: sz
         }
+
+        generatePlantPositions();
 
         return exportObject;
     },
@@ -138,3 +142,40 @@ function generateHeightFromVertices(_verts)
     }
     return data;
 }
+
+function generatePlantPositions(_numPlants, _radius)
+{
+    var clusterSize = 1;
+    var points = randomPointsOnSphere(_radius + 100, Math.round(_numPlants/clusterSize));
+
+    var convertedPoints = [];
+    for(i in points)
+    {
+        convertedPoints.push([points[i].x, points[i].y, points[i].z]);
+    }
+
+    return convertedPoints;
+}
+
+function randomPointsOnSphere(_radius, _numPoints) 
+{
+    points = [];
+
+    for(var i = 0; i < _numPoints; i ++)
+    {
+        var degrees = 180 / Math.PI;
+        var azimuth = Utils.randomRange(-180, 180);
+        console.log("AZIMUTH");
+        console.log(Utils.toRad(azimuth));
+        var zenith = Math.acos(Utils.randomRange(-1.0, 1.0)) * degrees - 90;
+        console.log("ZENITH");
+        console.log(Utils.toRad(zenith));
+        var eul = new Three.Euler(0, Utils.toRad(azimuth), Utils.toRad(zenith), 'YZX');
+        var vec = new Three.Vector3(_radius, 0, 0);
+        vec.applyEuler(eul);
+        points.push(vec);
+    }
+
+    return points;
+  }
+

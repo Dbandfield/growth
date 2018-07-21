@@ -10,17 +10,22 @@ var Plant = class Plant
         this.m_arguments = 
         [
             'scene',
-            'position',
-            'mesh'
+            'position'        
         ];
 
         checkArguments(_args, this.m_arguments);
 
-        this.m_scene = _args.scene;
-        this.m_material =new THREE.MeshLambertMaterial({color: 0xff0000});
-        this.m_mesh = _args.mesh;
-        this.m_mesh.material = this.m_material;
-        this.m_scene.add(this.m_mesh);      
+        this.scene = _args.scene;
+        this.material =new THREE.MeshBasicMaterial({color: 0xff0000});
+        this.position = _args.position;        
+    }
+
+    setup(geometry)
+    {
+        this.geometry = geometry;
+        this.mesh = new THREE.Mesh(this.geometry, this.material);
+        this.mesh.position.copy(this.position);
+        this.scene.add(this.mesh);     
     }
 }
 

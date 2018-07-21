@@ -2,6 +2,9 @@
 
 // local requires
 var checkArguments = require("./gr_arguments.js");
+var Plant = require("./gr_plant.js");
+
+
 var THREE = require('three');
 
 var Planet = class Planet
@@ -15,7 +18,7 @@ var Planet = class Planet
             'size',
             'geometry',
             'name',
-            'numPlants'
+            'plantPositions'
         ]
 
         checkArguments(_args, this.m_arguments);
@@ -26,8 +29,22 @@ var Planet = class Planet
         this.m_texGround = new THREE.TextureLoader().load("data/textures/ground.png");    
         this.m_material = new THREE.MeshLambertMaterial({map: this.m_texGround});//, vertexColors: THREE.VertexColors});
         this.m_mesh = new THREE.Mesh(this.m_geometry, this.m_material);
-        this.m_mesh.position.copy(_args.position);
+        this.position = new THREE.Vector3().copy(_args.position);
+        this.m_mesh.position.copy(this.position);
         this.m_scene.add(this.m_mesh);
+
+        this.plantGeometry = null;
+
+        this.plants = [];
+
+        for(var i in _args.plantPositions)
+        {
+            var pos = _args.plantPositions[i];
+            pos = new THREE.Vector3(pos[0], pos[1], pos[2]);
+            pos = pos.add(this.position);
+            this.plants.push(new Plant({scene: this.m_scene, 
+                                        position: pos}));
+        }
     }
 
     get name()
@@ -48,6 +65,14 @@ var Planet = class Planet
     update()
     {
 
+    }
+
+    makePlants(plantGeometry)
+    {
+        for(var i in this.plants)
+        {
+            this.plants[i].setup(plantGeometry);
+        }
     }
 }
 
