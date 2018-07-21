@@ -16,7 +16,6 @@ var Stats = require('./stats.js')
 // mine
 var Planet = require('./gr_planet.js');
 var Sun = require('./gr_sun.js');
-var Plant = require('./gr_plant.js');
 var Target = require('./gr_target.js');
 var Utils = require('./gr_utils.js');
 var Physics = require('./gr_physics.js');
@@ -28,6 +27,9 @@ var sio = require('socket.io-client');
 // sequence management
 // have all assets been loaded????
 var planetsCreated = false;
+var plantGeometryLoaded = false;
+var allLoaded = false;
+var assetSetupComplete = false;
 
 // communication
 var socket = sio();
@@ -49,7 +51,7 @@ var planets = [];
 var focusPlanetNdx = 0;
 
 // plants
-var plants = [];
+var plantGeometry = null;
 
 // HUD VARS
 var cameraHUD;
@@ -238,10 +240,6 @@ function init()
 
             element.requestPointerLock();
         }, 10000);
-
-
-    // initView(camera, planets[focusPlanetNdx].object);
-
 }
 
 function animate() 
@@ -250,14 +248,21 @@ function animate()
 
     stats.begin();
 
-    if(planetsCreated)
+    if(plantGeometryLoaded && 
+        planetsCreated && !assetSetupComplete)
     {
+        
+        allLoaded = true;
+        onAllLoaded();
+        assetSetupComplete = true;
+    }
 
+
+    if(allLoaded)
+    {
         var delta = clock.getDelta();
         
         sun.update(delta);
-
-        var params = [];
 
         if (controlsEnabled === true)
         {
@@ -550,10 +555,8 @@ function loadAssets()
     var plantFilename = "/data/models/mushroom1.gltf";
     var onSuccess = function(_gltf)
     {
-        var pos = new THREE.Vector3(0, 0, 0);
-        plants.push(new Plant({'scene':scene, 
-                               'position':pos, 
-                               'mesh':_gltf.scene.children[0]}));
+        plantGeometry = _gltf.scene.children[0].geometry;
+        plantGeometryLoaded = true;
     };
 
     var onLoading = function(_xhr) 
@@ -576,7 +579,7 @@ function loadAssets()
 
 function parseUniverse(_data, _scene)
 {
-    var expectedProps = ['name', 'numPlants', 'position', 'size', 'vertices']
+    var expectedProps = ['name', 'plantPositions', 'position', 'size', 'vertices']
     for(var p in _data)
     {
         for(var thing in expectedProps)
@@ -609,7 +612,7 @@ function parseUniverse(_data, _scene)
             size: _data[p].size,
             geometry: bufGeo,
             name: _data[p].name,
-            numPlants: _data[p].numPlants});
+            plantPositions: _data[p].plantPositions});
         planets.push(pl);
         _scene.add(pl.object);  
     }
@@ -618,6 +621,14 @@ function parseUniverse(_data, _scene)
     instr.innerHTML = pausedMessages.instructions;
     domAlways.innerHTML = alwaysMessages.travelling + planets[focusPlanetNdx].name;
 
+}
+
+function onAllLoaded()
+{
+    for(var i in planets)
+    {
+        planets[i].makePlants(plantGeometry);
+    }
 }
 
 

@@ -27,6 +27,11 @@ module.exports =
         }
 
         return _array;
+    },
+
+    randomRange : function(_min, _max)
+    {
+        return (Math.random() * (_max - _min)) + _min
     }
 
 }
