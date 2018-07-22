@@ -5,6 +5,9 @@
   "private": true,
   "main": "index.js",
   "dependencies": {
+    "babel-core": "^6.26.3",
+    "babel-preset-react": "^6.24.1",
+    "babelify": "^8.0.0",
     "browserify": "^16.2.2",
     "cookie-parser": "~1.4.3",
     "debug": "~2.6.9",
@@ -13,6 +16,8 @@
     "mongodb": "^3.0.10",
     "morgan": "~1.9.0",
     "pug": "2.0.0-beta11",
+    "react": "^16.4.1",
+    "react-dom": "^16.4.1",
     "socket.io": "^2.1.1",
     "socket.io-client": "^2.1.1",
     "three": "^0.92.0",
@@ -20,8 +25,8 @@
   },
   "devDependencies": {},
   "scripts": {
-    "build-debug": "browserify --debug ./public/scripts/index.js > ./public/scripts/bundle.js",
-    "build": "browserify ./public/scripts/index.js > ./public/scripts/bundle.js",
+    "build-debug": "browserify --debug -t [ babelify --presets [ react ] ] ./public/scripts/index.js -o ./public/scripts/bundle.js",
+    "build": "browserify -t [ babelify --presets [ react ] ] ./public/scripts/index.js -o ./public/scripts/bundle.js",
     "start": "node app.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
