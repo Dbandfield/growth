@@ -4,7 +4,7 @@
  * Full-screen textured quad shader
  */
 
-CopyShader = {
+var CopyShader = {
 
 	uniforms: {
 

@@ -7,7 +7,7 @@
  var ShaderPass = require('./ShaderPass.js');
 
 
-EffectComposer = function ( renderer, renderTarget ) {
+var EffectComposer = function ( renderer, renderTarget ) {
 
 	this.renderer = renderer;
 

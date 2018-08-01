@@ -1,32 +1,30 @@
 "use strict";
 
 // React
-var React = require('react');
-var Component = React.Component;
+import React, {Component} from 'react';
 
 //local requires
 // from three, but can't get via normal require. Edited to export.
-var PointerLockControls = require('./gr_PointerLockControls.js')
-var Loaders = require('./gr_loaders.js');
-var EffectComposer = require('./EffectComposer.js');
-var BloomPass = require('./BloomPass.js');
-var RenderPass = require('./RenderPass.js');
-var CopyShader = require('./CopyShader.js');
-var ShaderPass = require('./ShaderPass.js');
+import PointerLockControls from './gr_PointerLockControls.js';
+import Loaders from './gr_loaders.js';
+import EffectComposer from './EffectComposer.js';
+import BloomPass from './BloomPass.js';
+import RenderPass from './RenderPass.js';
+import CopyShader from './CopyShader.js';
+import ShaderPass from './ShaderPass.js';
 
 // three addon
-var Stats = require('./stats.js')
+import Stats from './stats.js';
 
 // mine
-var Planet = require('./gr_planet.js');
-var Sun = require('./gr_sun.js');
-var Target = require('./gr_target.js');
-var Utils = require('./gr_utils.js');
-var Physics = require('./gr_physics.js');
+import Planet from './gr_planet.js';
+import Sun from './gr_sun.js';
+import Utils from './gr_utils.js';
+import Physics from './gr_physics.js';
 
 // npm requires
-var THREE = require('three');
-var sio = require('socket.io-client');  
+import * as THREE from 'three';
+import sio from 'socket.io-client';
 
 class ThreeScene extends Component
 {
@@ -48,7 +46,6 @@ class ThreeScene extends Component
         // communication
         this.socket = sio();
 
-        // We have two scene, one main, and one for the HUD
         // MAIN vars
         this.camera;
         this.scene;
@@ -66,18 +63,8 @@ class ThreeScene extends Component
         // plants
         this.plantGeometry = null;
 
-        // HUD VARS
-        this.cameraHUD;
-        this.sceneHUD;
-        this.targetHUD;
-
-        // Text Overlays
-        // REACT CHANGE
-        // var overlay = document.getElementById('overlay');
-        // var instr = document.getElementById('instructions');
-        // var display3D = document.getElementById('display3D');
-        // var domAlways = document.getElementById('always');
-        // var domCursorLabel = document.getElementById('cursor-label');
+        // pointer lock
+        this.plElement = document.body;
 
         this.alwaysMessages = 
         {
@@ -123,15 +110,10 @@ class ThreeScene extends Component
 
     componentDidMount()
     {
-        // REACT CHANGE
-        // Set text to loading
-        // instr.innerHTML = pausedMessages.loading;
-        // domAlways.innerHTML = alwaysMessages.void;
 
         this.stats = new Stats();
         this.stats.showPanel(0);
-        // REACT CHANGE
-        //document.body.appendChild(stats.dom);
+        document.body.appendChild(this.stats.dom);
         
         this.scene = new THREE.Scene();
 
@@ -151,9 +133,7 @@ class ThreeScene extends Component
             b_parseUniverse(_data);
         });
 
-        this.initPointerLock();
-        // REACT CHANGE
-        // initHUD(); 
+
         this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 1, 100000);
 
         this.loadAssets();
@@ -167,68 +147,16 @@ class ThreeScene extends Component
 
         this.controls = new PointerLockControls(this.camera);
 
+        console.log(this.controls);
+
+        this.initPointerLock();
+
         this.scene.add(this.controls.getObject());
 
         // Player start position
         this.controls.getObject().position.set(3000, 3000, 3000);
 
-        var onKeyDown = function(event) 
-        {
-            switch (event.keyCode) 
-            {
-                case 38: // up
-                case 87: // w
-                    if(this.canWalk) this.moveForward = true;
-                    break;
-                case 37: // left
-                case 65: // a
-                    if(this.canWalk) this.moveLeft = true;
-                    break;
-                case 40: // down
-                case 83: // s
-                    if(this.canWalk) this.moveBackward = true;
-                    break;
-                case 39: // right
-                case 68: // d
-                    if(this.canWalk) this.moveRight = true;
-                    break;
-                case 32: // space
-
-                    break;
-
-            }
-        };
-
-        var onKeyUp = function(event) 
-        {
-            switch (event.keyCode) 
-            {
-                case 38: // up
-                case 87: // w
-                    this.moveForward = false;
-                    break;
-                case 37: // left
-                case 65: // a
-                    this.moveLeft = false;
-                    break;
-                case 40: // down
-                case 83: // s
-                    this.moveBackward = false;
-                    break;
-                case 39: // right
-                case 68: // d
-                    this.moveRight = false;
-                    break;
-                case 69:// e
-                    break;
-                case 70:// f
-                    this.travelFlag = true;
-                    break;
-            }
-        };
-
-        document.addEventListener('keydown', (ev) => {onKeyDown(ev)}, false);
-        document.addEventListener('keyup', (ev) => {onKeyUp(ev)}, false);
+        this.setControls();
 
         this.raycaster = new THREE.Raycaster(new THREE.Vector3(), new THREE.Vector3(0, -1, 0), 0);
 
@@ -264,6 +192,69 @@ class ThreeScene extends Component
             }, 10000);
 
         this.start(); // begin animmation
+    }
+
+    onKeyDown(event)
+    {
+        switch (event.keyCode) 
+        {
+            case 38: // up
+            case 87: // w
+                if(this.canWalk) this.moveForward = true;
+                break;
+            case 37: // left
+            case 65: // a
+                if(this.canWalk) this.moveLeft = true;
+                break;
+            case 40: // down
+            case 83: // s
+                if(this.canWalk) this.moveBackward = true;
+                break;
+            case 39: // right
+            case 68: // d
+                if(this.canWalk) this.moveRight = true;
+                break;
+            case 32: // space
+
+                break;
+
+        }
+    }
+
+    onKeyUp(event)
+    {
+        switch (event.keyCode) 
+        {
+            case 38: // up
+            case 87: // w
+                this.moveForward = false;
+                break;
+            case 37: // left
+            case 65: // a
+                this.moveLeft = false;
+                break;
+            case 40: // down
+            case 83: // s
+                this.moveBackward = false;
+                break;
+            case 39: // right
+            case 68: // d
+                this.moveRight = false;
+                break;
+            case 69:// e
+                break;
+            case 70:// f
+                this.travelFlag = true;
+                break;
+        }
+    }
+
+    setControls()
+    {
+        this.onKeyUp = this.onKeyUp.bind(this);
+        this.onKeyDown = this.onKeyDown.bind(this);
+        document.addEventListener('keydown', this.onKeyDown, false);
+        document.addEventListener('keyup', this.onKeyUp, false);
     }
 
     /* Cleanup when removed */
@@ -304,17 +295,11 @@ class ThreeScene extends Component
 
             if (this.controlsEnabled === true)
             {
-
                 var newFocus = this.getLookingAt(this.controls.getObject());
                 if(newFocus && 
                 newFocus.object.id != this.planets[this.focusPlanetNdx].object.id)
                 {
-                    // REACT CHANGE
-                    // domCursorLabel.innerHTML = newFocus.name;
-                    // if(!targetHUD.getActivated())
-                    // {
-                    //     targetHUD.activate();
-                    // }
+                    this.props.activateTarget(newFocus.name);
 
                     if(this.travelFlag)
                     {
@@ -328,21 +313,13 @@ class ThreeScene extends Component
                                 break;
                             }
                         }
-
-                        // REACT CHANGE
-                        // domAlways.innerHTML = alwaysMessages.travelling + planets[focusPlanetNdx].name;
                     
                         this.travelFlag = false;
                     }
                 }
                 else
                 {
-                    // REACT CHANGE
-                    // if(targetHUD.getActivated())
-                    // {
-                    //     domCursorLabel.innerHTML = "";
-                    //     targetHUD.deactivate();
-                    // }
+                    this.props.deactivateTarget();
                 }
 
                 var toPlanet = new THREE.Vector3();
@@ -402,8 +379,6 @@ class ThreeScene extends Component
                         if(!this.orientating)
                         {
                             this.orientating = true;
-                            // REACT CHANGE
-                            // always.innerHTML = alwaysMessages.orientate;
                         }
 
                         var newCanWalk = Physics.orientate(this.controls.getObject(), 
@@ -438,8 +413,6 @@ class ThreeScene extends Component
             this.renderer.render(this.scene, this.camera);
             this.renderer.clear();
             this.effectComposer.render(0.01);
-
-            // updateHUD(renderer);
         }
 
         this.stats.end();
@@ -454,13 +427,6 @@ class ThreeScene extends Component
 
         this.camera.aspect = window.innerWidth / window.innerHeight;
         this.camera.updateProjectionMatrix();
-
-        // REACT CHANGE
-        // this.cameraHUD.left =  -window.innerWidth/2;
-        // this.cameraHUD.right =  window.innerWidth/2;
-        // this.cameraHUD.top = -window.innerHeight/2;
-        // this.cameraHUD.bottom = window.innerHeight/2;
-        // this.cameraHUD.updateProjectionMatrix();
 
         this.renderer.setSize(window.innerWidth, window.innerHeight);
     } 
@@ -522,58 +488,69 @@ class ThreeScene extends Component
         }
     }
 
+    pointerLockChange(event)
+    {
+        if (document.pointerLockElement === this.plElement ||
+            document.mozPointerLockElement === this.plElement ||
+            document.webkitPointerLockElement === this.plElement) 
+        {
+            this.controlsEnabled = true;
+            this.controls.enabled = true;
+
+            this.props.unpause();
+            console.log("Pointer lock change unpause");
+        } 
+        else 
+        {
+            this.controls.enabled = false;
+            this.velocity.set(0, 0, 0);
+            this.moveLeft = false;
+            this.moveRight = false;
+            this.moveForward = false;
+            this.moveBackward = false;
+
+            this.props.pause(); 
+            console.log("Pointer lock change pause");                   
+        }
+    }
+
+    pointerLockError(event) 
+    {
+        console.log("Pointer lock error!");
+    };
+
     initPointerLock()
     {
+        var overlay = document.getElementById("overlay");
+
         var havePointerLock = 'pointerLockElement' in document ||
         'mozPointerLockElement' in document ||
         'webkitPointerLockElement' in document;
         if (havePointerLock) 
         {
-            var element = document.body;
-            var pointerlockchange = function(event)
-            {
-                if (document.pointerLockElement === element ||
-                    document.mozPointerLockElement === element ||
-                    document.webkitPointerLockElement === element) {
-                    this.controlsEnabled = true;
-                    this.controls.enabled = true;
-                    // REACT CHANGE
-                    // overlay.style.display = 'none';
-                } else {
-                    this.controls.enabled = false;
-                    this.velocity.set(0, 0, 0);
-                    this.moveLeft = false;
-                    this.moveRight = false;
-                    this.moveForward = false;
-                    this.moveBackward = false;
-                    // REACT CHANGE
-                    // overlay.style.display = 'table';
-                    // instr.style.display = '';
-                }
-            };
+            this.pointerLockChange = this.pointerLockChange.bind(this);
+            this.pointerLockError = this.pointerLockError.bind(this);
 
-            var pointerlockerror = function(event) 
-            {
-                // REACT CHANGE
-                // instr.style.display = '';
-                console.log("Pointer lock error!");
-            };
             // Hook pointer lock state change events
-            document.addEventListener('pointerlockchange', pointerlockchange, false);
-            document.addEventListener('mozpointerlockchange', pointerlockchange, false);
-            document.addEventListener('webkitpointerlockchange', pointerlockchange, false);
-            document.addEventListener('pointerlockerror', pointerlockerror, false);
-            document.addEventListener('mozpointerlockerror', pointerlockerror, false);
-            document.addEventListener('webkitpointerlockerror', pointerlockerror, false);
-            // REACT CHANGE
-            // overlay.addEventListener('click', function(event) {
+            document.addEventListener('pointerlockchange', this.pointerLockChange, false);
+            document.addEventListener('mozpointerlockchange', this.pointerLockChange, false);
+            document.addEventListener('webkitpointerlockchange', this.pointerLockChange, false);
+            document.addEventListener('pointerlockerror', this.pointerLockError, false);
+            document.addEventListener('mozpointerlockerror', this.pointerLockError, false);
+            document.addEventListener('webkitpointerlockerror', this.pointerLockError, false);
 
-            //     element.requestPointerLock = element.requestPointerLock ||
-            //         element.mozRequestPointerLock ||
-            //         element.webkitRequestPointerLock;
+            overlay.addEventListener('click', function(event) 
+            {
+                var element = document.body;
 
-            //     element.requestPointerLock();
-            // }, false);
+                console.log("CLick!");
+                element.requestPointerLock = element.requestPointerLock ||
+                    element.mozRequestPointerLock ||
+                    element.webkitRequestPointerLock;
+        
+                element.requestPointerLock();
+
+            }, false);
 
         } 
         else 

@@ -8,7 +8,7 @@
 
  var THREE = require('three');
 
-ConvolutionShader = {
+var ConvolutionShader = {
 
 	defines: {
 

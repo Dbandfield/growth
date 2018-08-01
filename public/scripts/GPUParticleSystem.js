@@ -17,7 +17,7 @@
 
 var THREE = require('three');
 
-GPUParticleSystem = function (options ) {
+var GPUParticleSystem = function (options ) {
 
 	THREE.Object3D.apply( this, arguments );
 
@@ -269,7 +269,7 @@ GPUParticleSystem.prototype.constructor = GPUParticleSystem;
 
 // Subclass for particle containers, allows for very large arrays to be spread out
 
-GPUParticleContainer = function ( maxParticles, particleSystem ) {
+var GPUParticleContainer = function ( maxParticles, particleSystem ) {
 
 	THREE.Object3D.apply( this, arguments );
 

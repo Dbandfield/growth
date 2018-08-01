@@ -5,7 +5,7 @@
  var THREE = require('three');
  var Pass = require('./Pass.js');
 
-ShaderPass = function ( shader, textureID ) {
+var ShaderPass = function ( shader, textureID ) {
 
 	Pass.call( this );
 
