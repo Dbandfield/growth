@@ -5,7 +5,7 @@
  var THREE = require('three');
  var Pass = require('./Pass.js');
 
-RenderPass = function ( scene, camera, overrideMaterial, clearColor, clearAlpha ) {
+var RenderPass = function ( scene, camera, overrideMaterial, clearColor, clearAlpha ) {
 
 	Pass.call( this );
 

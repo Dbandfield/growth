@@ -7,7 +7,7 @@
  var ConvolutionShader = require('./ConvolutionShader.js');
  var Pass =require('./Pass.js');
 
-BloomPass = function ( strength, kernelSize, sigma, resolution ) {
+var BloomPass = function ( strength, kernelSize, sigma, resolution ) {
 
 	Pass.call( this );
 

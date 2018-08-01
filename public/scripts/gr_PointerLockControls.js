@@ -5,7 +5,7 @@
 
 var THREE = require('three');
 
-PointerLockControls = function ( camera ) {
+var PointerLockControls = function ( camera ) {
 
 	var scope = this;
 
